@@ -9,13 +9,13 @@ export function authenticate(
   next: NextFunction
 ): void {
   const header = req.headers.authorization;
+  const match = header?.match(/^Bearer\s+(.+)$/i);
 
-  if (!header || !header.startsWith("Bearer ")) {
+  if (!match) {
     throw new AppError(401, "Falta el token de autenticación");
   }
 
-  const token = header.slice(7);
-  const data = verifyToken(token);
+  const data = verifyToken(match[1].trim());
 
   res.locals.userId = data.userId;
   res.locals.role = data.role;
@@ -25,7 +25,7 @@ export function authenticate(
 
 export function requireRole(role: Role) {
   return (
-    req: Request,
+    _req: Request,
     res: Response,
     next: NextFunction
   ): void => {
@@ -41,5 +41,11 @@ export function requireRole(role: Role) {
 }
 
 export function getUserId(res: Response): number {
-  return res.locals.userId as number;
+  const userId = res.locals.userId;
+
+  if (typeof userId !== "number") {
+    throw new AppError(401, "Sesión no válida");
+  }
+
+  return userId;
 }

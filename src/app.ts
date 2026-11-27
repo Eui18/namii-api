@@ -4,30 +4,31 @@ import { errorHandler } from "./middlewares/errorHandler";
 import { createAuthRoutes } from "./routes/authRoutes";
 import { AppError } from "./utils/appError";
 
-const app = express();
+export function createApp() {
+  const app = express();
+  const container = createAppContainer();
 
-app.use(express.json({ limit: "1mb" }));
+  app.disable("x-powered-by");
+  app.use(express.json({ limit: "10kb" }));
 
-app.get("/api/health", (req: Request, res: Response) => {
-  res.status(200).json({
-    status: "ok",
-    message: "Ñamii API funcionando"
+  app.get("/api/health", (_req: Request, res: Response) => {
+    res.status(200).json({
+      status: "ok",
+      message: "Ñamii API funcionando"
+    });
   });
-});
 
-const container = createAppContainer();
+  app.use("/api/auth", createAuthRoutes(container.authController));
 
-app.use(
-  "/api/auth",
-  createAuthRoutes(container.authController)
-);
+  app.use(
+    (_req: Request, _res: Response, next: NextFunction) => {
+      next(new AppError(404, "Ruta no encontrada"));
+    }
+  );
 
-app.use(
-  (req: Request, res: Response, next: NextFunction) => {
-    next(new AppError(404, "Ruta no encontrada"));
-  }
-);
+  app.use(errorHandler);
 
-app.use(errorHandler);
+  return app;
+}
 
-export default app;
+export default createApp();

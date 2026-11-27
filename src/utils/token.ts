@@ -8,26 +8,22 @@ export interface TokenData {
   role: Role;
 }
 
-export function generateToken(
-  userId: number,
-  role: Role
-): string {
+export function generateToken(userId: number, role: Role): string {
   const options: SignOptions = {
+    algorithm: "HS256",
     expiresIn: env.jwtExpiresIn as SignOptions["expiresIn"]
   };
 
-  return jwt.sign(
-    { userId, role },
-    env.jwtSecret,
-    options
-  );
+  return jwt.sign({ userId, role }, env.jwtSecret, options);
 }
 
 export function verifyToken(token: string): TokenData {
   let payload: string | JwtPayload;
 
   try {
-    payload = jwt.verify(token, env.jwtSecret);
+    payload = jwt.verify(token, env.jwtSecret, {
+      algorithms: ["HS256"]
+    });
   } catch {
     throw new AppError(401, "Token inválido o expirado");
   }
@@ -35,6 +31,8 @@ export function verifyToken(token: string): TokenData {
   if (
     typeof payload === "string" ||
     typeof payload.userId !== "number" ||
+    !Number.isInteger(payload.userId) ||
+    payload.userId <= 0 ||
     (payload.role !== "CLIENTE" && payload.role !== "VENDEDOR")
   ) {
     throw new AppError(401, "Token inválido");

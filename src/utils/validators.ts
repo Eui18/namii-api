@@ -27,9 +27,13 @@ export function readEmail(value: unknown): string {
       ? value.trim().toLowerCase()
       : "";
 
+  if (email.length === 0 || email.length > 150) {
+    throw new AppError(400, "Escribe un correo válido");
+  }
+
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  if (!emailRegex.test(email) || email.length > 150) {
+  if (!emailRegex.test(email)) {
     throw new AppError(400, "Escribe un correo válido");
   }
 
@@ -38,6 +42,10 @@ export function readEmail(value: unknown): string {
 
 export function readPassword(value: unknown): string {
   const password = typeof value === "string" ? value : "";
+
+  if (Buffer.byteLength(password, "utf8") > 72) {
+    throw new AppError(400, "La contraseña es demasiado larga");
+  }
 
   const validPassword =
     password.length >= 8 &&
@@ -50,10 +58,6 @@ export function readPassword(value: unknown): string {
       400,
       "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número"
     );
-  }
-
-  if (Buffer.byteLength(password, "utf8") > 72) {
-    throw new AppError(400, "La contraseña es demasiado larga");
   }
 
   return password;
